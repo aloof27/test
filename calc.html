@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>바이트 및 비트 계산기</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      margin: 50px;
+    }
+
+    input, select {
+      padding: 10px;
+      margin: 5px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 50%;
+      margin: 20px auto;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+  </style>
+</head>
+<body>
+  <h2>비트 및 바이트 계산기</h2>
+
+  <label for="inputValue">입력값:</label>
+  <input type="number" id="inputValue" placeholder="값을 입력하세요" oninput="calculateBytesAndBits()">
+
+  <label for="unit">단위 선택:</label>
+  <select id="unit" onchange="calculateBytesAndBits()">
+	<option value="bits">비트</option>
+    <option value="bytes">바이트</option>
+    <option value="kilobytes">킬로바이트</option>
+    <option value="megabytes">메가바이트</option>
+    <option value="gigabytes">기가바이트</option>
+    <option value="terabytes">테라바이트</option>
+    
+  </select>
+
+  <table>
+    <thead>
+      <tr>
+        <th>단위</th>
+        <th>값</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="bitsRow">
+        <td width =250>비트</td>
+        <td id="bits">0 b</td>
+      </tr>
+      <tr id="bytesRow">
+        <td>바이트</td>
+        <td id="bytesOutput">0 B</td>
+      </tr>
+      <tr id="kilobytesRow">
+        <td>킬로바이트</td>
+        <td id="kilobytes">0 KB</td>
+      </tr>
+      <tr id="megabytesRow">
+        <td>메가바이트</td>
+        <td id="megabytes">0 MB</td>
+      </tr>
+      <tr id="gigabytesRow">
+        <td>기가바이트</td>
+        <td id="gigabytes">0 GB</td>
+      </tr>
+      <tr id="terabytesRow">
+        <td>테라바이트</td>
+        <td id="terabytes">0 TB</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <script>
+    function calculateBytesAndBits() {
+      const inputValue = document.getElementById('inputValue').value;
+      const unitSelect = document.getElementById('unit');
+      const selectedUnit = unitSelect.options[unitSelect.selectedIndex].value;
+
+      const bitsOutput = document.getElementById('bits');
+      const bytesOutput = document.getElementById('bytesOutput');
+      const kilobytesOutput = document.getElementById('kilobytes');
+      const megabytesOutput = document.getElementById('megabytes');
+      const gigabytesOutput = document.getElementById('gigabytes');
+      const terabytesOutput = document.getElementById('terabytes');
+
+      let bytes = parseFloat(inputValue);
+
+      if (selectedUnit === 'kilobytes') {
+        bytes *= 1024;
+      } else if (selectedUnit === 'megabytes') {
+        bytes *= 1024 * 1024;
+      } else if (selectedUnit === 'gigabytes') {
+        bytes *= 1024 * 1024 * 1024;
+      } else if (selectedUnit === 'terabytes') {
+        bytes *= 1024 * 1024 * 1024 * 1024;
+      } else if (selectedUnit === 'bits') {
+        bytes /= 8;
+      }
+
+      const bits = bytes * 8;
+      const kilobytes = bytes / 1024;
+      const megabytes = kilobytes / 1024;
+      const gigabytes = megabytes / 1024;
+      const terabytes = gigabytes / 1024;
+
+      document.getElementById('bitsRow').getElementsByTagName('td')[1].textContent = `${bits} b`;
+      document.getElementById('bytesRow').getElementsByTagName('td')[1].textContent = `${bytes} B`;
+      document.getElementById('kilobytesRow').getElementsByTagName('td')[1].textContent = `${kilobytes.toFixed(2)} KB`;
+      document.getElementById('megabytesRow').getElementsByTagName('td')[1].textContent = `${megabytes.toFixed(2)} MB`;
+      document.getElementById('gigabytesRow').getElementsByTagName('td')[1].textContent = `${gigabytes.toFixed(2)} GB`;
+      document.getElementById('terabytesRow').getElementsByTagName('td')[1].textContent = `${terabytes.toFixed(2)} TB`;
+    }
+  </script>
+</body>
+</html>
