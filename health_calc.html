@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>보수 외 소득월액보험료 계산기</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"], input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover { background-color: #0056b3; }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .result-box p { margin: 5px 0; color: #333; }
+        .result-box strong { color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>보수 외 소득월액보험료 계산기</h1>
+
+        <div class="form-group">
+            <label for="annualIncome">연소득 (원):</label>
+            <input type="number" id="annualIncome" value="30000000" min="0">
+        </div>
+
+        <div class="form-group">
+            <label for="healthInsuranceRate">건강보험료 요율 (%):</label>
+            <input type="number" id="healthInsuranceRate" value="7.09" step="0.01" min="0">
+        </div>
+
+        <div class="form-group">
+            <label for="longTermCareRate">장기요양보험료 요율 (%):</label>
+            <input type="number" id="longTermCareRate" value="0.9182" step="0.0001" min="0">
+        </div>
+
+        <button onclick="calculatePremiums()">계산하기</button>
+
+        <div class="result-box" id="results">
+            <p><strong>월 건강보험료:</strong> <span id="monthlyHealthPremium">0</span> 원</p>
+            <p><strong>월 장기요양보험료:</strong> <span id="monthlyLongTermCarePremium">0</span> 원</p>
+            <p><strong>월 총 보험료:</strong> <span id="monthlyTotalPremium">0</span> 원</p>
+            <hr style="margin-top: 20px; margin-bottom: 15px; border: 0; border-top: 1px solid #e0e0e0;">
+            <h4 style="margin-bottom: 10px;">계산 과정:</h4>
+            <div id="calculation-details" style="font-size: 14px; line-height: 1.6;"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculatePremiums() {
+            const annualIncome = parseFloat(document.getElementById('annualIncome').value);
+            const healthInsuranceRate = parseFloat(document.getElementById('healthInsuranceRate').value) / 100;
+            const longTermCareRateInput = parseFloat(document.getElementById('longTermCareRate').value); // Get the percentage value from input
+            const longTermCareRate = longTermCareRateInput / 100; // Convert to decimal for calculation
+            const deduction = 20000000;
+
+            if (isNaN(annualIncome) || isNaN(healthInsuranceRate) || isNaN(longTermCareRate)) {
+                alert('유효한 숫자를 입력해주세요.');
+                return;
+            }
+
+            // 2천만원 공제
+            const taxableIncome = Math.max(0, annualIncome - deduction);
+
+            // 월 소득 환산
+            const monthlyIncome = taxableIncome / 12;
+
+            // 월 건강보험료 계산 (10원 단위 절삭)
+            let monthlyHealthPremium = Math.floor((monthlyIncome * healthInsuranceRate) / 10) * 10;
+
+            // 월 장기요양보험료 계산 (건강보험료 x (장기요양보험료율 / 건강보험료율), 10원 단위 절삭)
+            // longTermCareRateInput is the percentage value (e.g., 0.9182)
+            // parseFloat(document.getElementById('healthInsuranceRate').value) is the percentage value (e.g., 7.09)
+            let monthlyLongTermCarePremium = Math.floor((monthlyHealthPremium * (longTermCareRateInput / parseFloat(document.getElementById('healthInsuranceRate').value))) / 10) * 10;
+
+            // 월 총 보험료 계산 (10원 단위 절삭)
+            let monthlyTotalPremium = Math.floor((monthlyHealthPremium + monthlyLongTermCarePremium) / 10) * 10;
+
+            document.getElementById('monthlyHealthPremium').textContent = monthlyHealthPremium.toLocaleString();
+            document.getElementById('monthlyLongTermCarePremium').textContent = monthlyLongTermCarePremium.toLocaleString();
+            document.getElementById('monthlyTotalPremium').textContent = monthlyTotalPremium.toLocaleString();
+
+            // 계산 과정 설명
+            const detailsContainer = document.getElementById('calculation-details');
+            detailsContainer.innerHTML = `
+                <p>1. 연소득: ${annualIncome.toLocaleString()} 원</p>
+                <p>2. 기본공제: ${deduction.toLocaleString()} 원</p>
+                <p>3. 과세대상 소득: ${taxableIncome.toLocaleString()} 원 (1 - 2)</p>
+                <p>4. 월 소득 환산액: ${Math.floor(monthlyIncome).toLocaleString()} 원 (3 &divide; 12)</p>
+                <p>5. 월 건강보험료: ${monthlyHealthPremium.toLocaleString()} 원 (4 &times; ${document.getElementById('healthInsuranceRate').value}%, 1원 단위 절사)</p>
+                <p>6. 월 장기요양보험료: ${monthlyLongTermCarePremium.toLocaleString()} 원 (5 &times; (${longTermCareRateInput}% &divide; ${document.getElementById('healthInsuranceRate').value}%), 1원 단위 절사)</p>
+                <p><strong>7. 월 총 납부액: ${monthlyTotalPremium.toLocaleString()} 원 (5 + 6, 1원 단위 절사)</strong></p>
+            `;
+        }
+
+        // 초기 로드 시 계산 실행
+        document.addEventListener('DOMContentLoaded', calculatePremiums);
+    </script>
+</body>
+</html>
