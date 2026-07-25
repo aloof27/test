@@ -368,7 +368,7 @@
     .target-hint-text {
       color: var(--text-sub);
       font-size: 0.85rem;
-      min-height: 24px;
+      min-height: 26px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -381,42 +381,57 @@
       font-weight: 700;
     }
 
-    /* Live Detector Status Bar & Volume Meter */
+    /* Live Detector Status Bar & Fixed Height Layout */
     .status-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
+      gap: 4px;
       background: rgba(15, 23, 42, 0.6);
-      padding: 8px 10px;
+      padding: 8px 6px;
       border-radius: 12px;
       border: 1px solid rgba(255, 255, 255, 0.05);
+      min-height: 52px;
     }
 
     .status-card {
       text-align: center;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     .status-card .label {
-      font-size: 0.65rem;
+      font-size: 0.62rem;
       color: var(--text-sub);
       margin-bottom: 2px;
+      white-space: nowrap;
     }
 
     .status-card .val {
       font-family: 'Outfit', sans-serif;
-      font-size: 1rem;
+      font-size: 0.92rem;
       font-weight: 700;
       color: var(--accent-cyan);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      min-height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* Volume Level Gauge */
     .vol-bar-wrapper {
-      width: 100%;
-      height: 7px;
+      width: 90%;
+      height: 6px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 4px;
       overflow: hidden;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
     .vol-bar-fill {
@@ -542,6 +557,8 @@
       z-index: 2;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+      will-change: transform;
+      transform-origin: center;
     }
 
     .note-marker.target {
@@ -577,6 +594,7 @@
 
     .fretboard-controls {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       margin-top: 10px;
@@ -768,12 +786,15 @@
         font-size: 2.6rem;
       }
       .status-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        padding: 6px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+        padding: 6px 4px;
+      }
+      .status-card .label {
+        font-size: 0.58rem;
       }
       .status-card .val {
-        font-size: 0.9rem;
+        font-size: 0.82rem;
       }
       .fretboard-controls {
         flex-direction: column;
@@ -827,12 +848,12 @@
         padding: 2px 8px;
       }
       .status-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 4px;
-        padding: 4px 6px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 2px;
+        padding: 4px;
       }
       .status-card .val {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
       }
       .fretboard {
         min-width: 600px;
@@ -1456,7 +1477,7 @@
     toggleShowHint.addEventListener('change', updateFretboardMarkers);
     toggleShowAllNotes.addEventListener('change', updateFretboardMarkers);
 
-    // 8. 오디오 및 마이크 세팅 (GainNode 증폭 및 iOS 대응)
+    // 8. 오디오 및 마이크 세팅
     async function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1469,7 +1490,6 @@
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 2048;
 
-      // 마이크 파이프라인 신호 증폭 GainNode 생성
       gainNode = audioCtx.createGain();
       gainNode.gain.setValueAtTime(currentGainVal, audioCtx.currentTime);
 
@@ -1477,7 +1497,6 @@
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         microphone = audioCtx.createMediaStreamSource(stream);
         
-        // microphone -> gainNode (증폭) -> analyser (피치 분석)
         microphone.connect(gainNode);
         gainNode.connect(analyser);
 
@@ -1511,7 +1530,7 @@
       return floatBuf;
     }
 
-    // 10. Autocorrelation Pitch Detection (초고감도 수음 임계값 rms < 0.002)
+    // 10. Autocorrelation Pitch Detection
     function autoCorrelate(buf, sampleRate) {
       let SIZE = buf.length;
       let rms = 0;
@@ -1522,11 +1541,9 @@
       }
       rms = Math.sqrt(rms / SIZE);
 
-      // 라이브 수음 음량 게이지 업데이트
       let volPct = Math.min(Math.round((rms / 0.04) * 100), 100);
       if (volBarFill) volBarFill.style.width = `${volPct}%`;
 
-      // 극소 미세 울림음까지 감지하도록 임계값 0.002 설정
       if (rms < 0.002) return -1;
 
       let r1 = 0, r2 = SIZE - 1, thres = 0.2;
@@ -1573,7 +1590,7 @@
       return noteName;
     }
 
-    // 11. Real-time Audio Loop
+    // 11. Real-time Audio Loop (음계 이름 매칭으로 유연하게 판정)
     function updatePitch() {
       let buf = getTimeDomainData(analyser);
       let pitch = autoCorrelate(buf, audioCtx.sampleRate);
@@ -1640,7 +1657,7 @@
           }
         }
       } else {
-        detectedPitchDisplay.innerText = '입력 대기 중...';
+        detectedPitchDisplay.innerText = '0 Hz';
         detectedNoteDisplay.innerText = '-';
         correctHoldCount = 0;
         wrongHoldCount = 0;
