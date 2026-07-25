@@ -213,6 +213,60 @@
       transform: scale(0.98);
     }
 
+    /* Mic Gain Amplification Controls */
+    .mic-gain-container {
+      margin-bottom: 10px;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .mic-gain-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mic-gain-label .gain-val-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      background: rgba(0, 245, 212, 0.15);
+      padding: 2px 8px;
+      border-radius: 8px;
+    }
+
+    .mic-gain-controls {
+      display: flex;
+      gap: 6px;
+    }
+
+    .gain-btn {
+      flex: 1;
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-sub);
+      padding: 5px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 32px;
+    }
+
+    .gain-btn.active {
+      background: linear-gradient(135deg, rgba(0, 245, 212, 0.3) 0%, rgba(123, 44, 191, 0.4) 100%);
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 245, 212, 0.25);
+    }
+
     /* String Filter Selector Buttons */
     .string-filter-container {
       margin-bottom: 10px;
@@ -327,10 +381,10 @@
       font-weight: 700;
     }
 
-    /* Live Detector Status Bar */
+    /* Live Detector Status Bar & Volume Meter */
     .status-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 6px;
       background: rgba(15, 23, 42, 0.6);
       padding: 8px 10px;
@@ -350,9 +404,26 @@
 
     .status-card .val {
       font-family: 'Outfit', sans-serif;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       color: var(--accent-cyan);
+    }
+
+    /* Volume Level Gauge */
+    .vol-bar-wrapper {
+      width: 100%;
+      height: 7px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .vol-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #00f5d4 0%, #10b981 100%);
+      transition: width 0.08s ease-out;
     }
 
     /* Fretboard Container & Touch Scrolling */
@@ -697,12 +768,12 @@
         font-size: 2.6rem;
       }
       .status-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 4px;
         padding: 6px;
       }
       .status-card .val {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
       }
       .fretboard-controls {
         flex-direction: column;
@@ -714,7 +785,7 @@
         border-radius: 14px;
         margin-bottom: 8px;
       }
-      .string-filter-container {
+      .string-filter-container, .mic-gain-container {
         padding: 6px 8px;
         margin-bottom: 8px;
       }
@@ -725,7 +796,7 @@
       }
     }
 
-    /* iPhone & Mobile LANDSCAPE (가로 모드) Optimization */
+    /* iPhone & Mobile LANDSCAPE Optimization */
     @media (orientation: landscape) and (max-height: 520px) {
       body {
         padding: 4px 8px;
@@ -737,7 +808,7 @@
         margin-bottom: 6px;
       }
       .app-layout {
-        grid-template-columns: 280px 1fr;
+        grid-template-columns: 290px 1fr;
         gap: 8px;
       }
       .card {
@@ -756,7 +827,7 @@
         padding: 2px 8px;
       }
       .status-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 4px;
         padding: 4px 6px;
       }
@@ -791,7 +862,7 @@
     <p>마이크를 켜고 기타를 연주하여 제시된 음계를 맞히고 실시간 지판과 이력을 확인하세요!</p>
   </header>
 
-  <!-- Mobile Tab Navigation Bar (Visible only on iPhone / Mobile) -->
+  <!-- Mobile Tab Navigation Bar -->
   <div class="mobile-nav-tabs">
     <button class="tab-btn active" id="tabTrainerBtn">🎯 트레이너 & 지판</button>
     <button class="tab-btn" id="tabHistoryBtn">📜 연주 이력 (<span id="mobileHistoryBadge">0</span>)</button>
@@ -805,6 +876,20 @@
       <div class="card" id="gameCard">
         <div class="trainer-header">
           <button class="btn-start" id="startBtn">🎤 마이크 시작 & 게임 시작</button>
+        </div>
+
+        <!-- Mic Gain Amplification Controls -->
+        <div class="mic-gain-container">
+          <div class="mic-gain-label">
+            <span>🎛️ 마이크 수음 감도 증폭 (Gain)</span>
+            <span class="gain-val-tag" id="gainValTag">3.5x (아이폰 추천)</span>
+          </div>
+          <div class="mic-gain-controls" id="micGainControls">
+            <button class="gain-btn" data-gain="1">1x (기본)</button>
+            <button class="gain-btn active" data-gain="3.5">3.5x (추천)</button>
+            <button class="gain-btn" data-gain="6">6x (고감도)</button>
+            <button class="gain-btn" data-gain="10">10x (최대)</button>
+          </div>
         </div>
 
         <!-- String Selection Filter (Multi-Select Supported) -->
@@ -830,7 +915,7 @@
           <div class="target-hint-text" id="targetHintDisplay">시작 버튼을 눌러 피치 감지를 시작하세요.</div>
         </div>
 
-        <!-- Real-time Pitch & Status Info -->
+        <!-- Real-time Pitch, Status & Volume Level Gauge -->
         <div class="status-grid">
           <div class="status-card">
             <div class="label">감지된 음</div>
@@ -839,6 +924,12 @@
           <div class="status-card">
             <div class="label">주파수(Hz)</div>
             <div class="val" id="detectedPitch">0 Hz</div>
+          </div>
+          <div class="status-card">
+            <div class="label">수음 크기</div>
+            <div class="vol-bar-wrapper">
+              <div class="vol-bar-fill" id="volBarFill"></div>
+            </div>
           </div>
           <div class="status-card">
             <div class="label">현재 점수</div>
@@ -932,6 +1023,8 @@
     let audioCtx = null;
     let analyser = null;
     let microphone = null;
+    let gainNode = null;
+    let currentGainVal = 3.5; // 아이폰 기본 3.5배 증폭
     let isPlaying = false;
 
     // 복수 선택 지원 (기본값: 1~6번줄 전체 선택)
@@ -961,10 +1054,14 @@
     const targetHintDisplay = document.getElementById('targetHintDisplay');
     const detectedNoteDisplay = document.getElementById('detectedNote');
     const detectedPitchDisplay = document.getElementById('detectedPitch');
+    const volBarFill = document.getElementById('volBarFill');
     const scoreDisplay = document.getElementById('scoreDisplay');
     const streakDisplay = document.getElementById('streakDisplay');
     const gameCard = document.getElementById('gameCard');
     const fretboardEl = document.getElementById('fretboard');
+
+    const gainValTag = document.getElementById('gainValTag');
+    const gainBtns = document.querySelectorAll('.gain-btn');
 
     const toggleShowHint = document.getElementById('toggleShowHint');
     const toggleShowAllNotes = document.getElementById('toggleShowAllNotes');
@@ -982,6 +1079,20 @@
     const sidebarColumn = document.getElementById('sidebarColumn');
     const tabTrainerBtn = document.getElementById('tabTrainerBtn');
     const tabHistoryBtn = document.getElementById('tabHistoryBtn');
+
+    // 마이크 증폭 (Gain) 버튼 이벤트
+    gainBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        gainBtns.forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        currentGainVal = parseFloat(e.target.dataset.gain);
+        gainValTag.innerText = `${currentGainVal}x ${currentGainVal === 3.5 ? '(추천)' : ''}`;
+
+        if (gainNode && audioCtx) {
+          gainNode.gain.setValueAtTime(currentGainVal, audioCtx.currentTime);
+        }
+      });
+    });
 
     // Mobile Tab Switcher Logic
     function switchMobileTab(tab) {
@@ -1001,7 +1112,6 @@
     tabTrainerBtn.addEventListener('click', () => switchMobileTab('trainer'));
     tabHistoryBtn.addEventListener('click', () => switchMobileTab('history'));
 
-    // Initialize Mobile View Filter
     if (window.innerWidth <= 960) {
       switchMobileTab('trainer');
     }
@@ -1078,13 +1188,11 @@
         fretCol.className = `fret-column ${fret === 0 ? 'nut' : ''}`;
         fretCol.dataset.fret = fret;
 
-        // Fret Number Label
         const fretNumLabel = document.createElement('div');
         fretNumLabel.className = 'fret-number';
         fretNumLabel.innerText = fret === 0 ? 'Nut' : fret;
         fretCol.appendChild(fretNumLabel);
 
-        // Fret Inlay Markers
         if (INLAY_FRETS.includes(fret)) {
           if (fret === 12) {
             const dot1 = document.createElement('div');
@@ -1100,22 +1208,18 @@
           }
         }
 
-        // 6 Strings for this Fret Column
         STRINGS.forEach(str => {
           const cell = document.createElement('div');
           cell.className = 'string-cell';
 
-          // Horizontal String Line
           const stringLine = document.createElement('div');
           stringLine.className = 'string-line';
           stringLine.style.height = `${str.thickness}px`;
           cell.appendChild(stringLine);
 
-          // Calculate note for this specific string & fret
           const openIdx = NOTE_NAMES.indexOf(str.openNote);
           const noteName = NOTE_NAMES[(openIdx + fret) % 12];
 
-          // Note marker circle
           const marker = document.createElement('div');
           marker.className = 'note-marker';
           marker.dataset.string = str.num;
@@ -1134,7 +1238,7 @@
       updateFretboardMarkers();
     }
 
-    // 2. 지판 마커 업데이트 (기본적으로 답을 가리지 않고, 힌트 체크박스를 켤 때만 표시)
+    // 2. 지판 마커 업데이트
     function updateFretboardMarkers() {
       const markers = fretboardEl.querySelectorAll('.note-marker');
       const showHint = toggleShowHint.checked;
@@ -1204,7 +1308,7 @@
       });
     }
 
-    // 5. 사운드 피드백 (iOS Safari 대응 Web Audio API Unlock 포함)
+    // 5. 사운드 피드백
     function playSuccessSound() {
       if (!audioCtx) return;
       if (audioCtx.state === 'suspended') {
@@ -1249,7 +1353,7 @@
       }
     }
 
-    // 6. 새로운 문제 생성 (프렛 번호를 노출하지 않고 문제 제시)
+    // 6. 새로운 문제 생성
     function nextQuestion() {
       let stringPool = STRINGS.filter(s => selectedStringNums.has(s.num));
       if (stringPool.length === 0) {
@@ -1273,8 +1377,6 @@
       wrongHoldCount = 0;
       lastWrongNote = "";
       questionStartTime = Date.now();
-      
-      // 새 문제 시작 후 1초간 이전 문제 잔여 진동음으로 인한 오답 판정 방지 (Grace Period)
       gracePeriodUntil = Date.now() + 1000;
 
       updateFretboardMarkers();
@@ -1338,7 +1440,6 @@
         historyListEl.appendChild(el);
       });
 
-      // Stats Update
       historyCountBadge.innerText = `${historyData.length}건`;
       mobileHistoryBadge.innerText = `${historyData.length}`;
       totalSuccessVal.innerText = `${historyData.length}`;
@@ -1355,13 +1456,12 @@
     toggleShowHint.addEventListener('change', updateFretboardMarkers);
     toggleShowAllNotes.addEventListener('change', updateFretboardMarkers);
 
-    // 8. 오디오 및 마이크 세팅 (iOS 호환성 및 수음 보정)
+    // 8. 오디오 및 마이크 세팅 (GainNode 증폭 및 iOS 대응)
     async function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
 
-      // iOS Safari touch event 시 즉시 AudioContext 언락
       if (audioCtx.state === 'suspended') {
         await audioCtx.resume();
       }
@@ -1369,10 +1469,18 @@
       analyser = audioCtx.createAnalyser();
       analyser.fftSize = 2048;
 
+      // 마이크 파이프라인 신호 증폭 GainNode 생성
+      gainNode = audioCtx.createGain();
+      gainNode.gain.setValueAtTime(currentGainVal, audioCtx.currentTime);
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         microphone = audioCtx.createMediaStreamSource(stream);
-        microphone.connect(analyser);
+        
+        // microphone -> gainNode (증폭) -> analyser (피치 분석)
+        microphone.connect(gainNode);
+        gainNode.connect(analyser);
+
         isPlaying = true;
         startBtn.style.display = 'none';
         nextQuestion();
@@ -1382,7 +1490,7 @@
       }
     }
 
-    // 9. 타임 도메인 데이터 추출 (iOS Safari getFloatTimeDomainData 0값 반환 호환 처리)
+    // 9. 타임 도메인 데이터 추출
     function getTimeDomainData(analyserNode) {
       let floatBuf = new Float32Array(analyserNode.fftSize);
       
@@ -1395,7 +1503,6 @@
         if (hasSignal) return floatBuf;
       }
 
-      // getByteTimeDomainData 기반 iOS 호환 변환 (100% 동작)
       let byteBuf = new Uint8Array(analyserNode.fftSize);
       analyserNode.getByteTimeDomainData(byteBuf);
       for (let i = 0; i < byteBuf.length; i++) {
@@ -1404,7 +1511,7 @@
       return floatBuf;
     }
 
-    // 10. Autocorrelation Pitch Detection (iOS 수음 임계값 보정)
+    // 10. Autocorrelation Pitch Detection (초고감도 수음 임계값 rms < 0.002)
     function autoCorrelate(buf, sampleRate) {
       let SIZE = buf.length;
       let rms = 0;
@@ -1415,8 +1522,12 @@
       }
       rms = Math.sqrt(rms / SIZE);
 
-      // iOS 마이크의 낮아진 입력 신호(RMS) 수음 감도를 위해 임계값 하향 조정 (0.015 -> 0.005)
-      if (rms < 0.005) return -1;
+      // 라이브 수음 음량 게이지 업데이트
+      let volPct = Math.min(Math.round((rms / 0.04) * 100), 100);
+      if (volBarFill) volBarFill.style.width = `${volPct}%`;
+
+      // 극소 미세 울림음까지 감지하도록 임계값 0.002 설정
+      if (rms < 0.002) return -1;
 
       let r1 = 0, r2 = SIZE - 1, thres = 0.2;
       for (let i = 0; i < SIZE / 2; i++) {
