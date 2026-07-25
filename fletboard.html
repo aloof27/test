@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>기타 지판 음계 트레이너 & Fretboard Visualizer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Pretendard:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f111a;
+      --card-bg: rgba(26, 30, 46, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent-cyan: #00f5d4;
+      --accent-pink: #7b2cbf;
+      --accent-gold: #ffb703;
+      --text-main: #f8f9fa;
+      --text-sub: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --fretboard-bg: linear-gradient(180deg, #231b19 0%, #15100e 100%);
+      --fret-wire: #8b929a;
+      --string-color: #d1d5db;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 15% 15%, rgba(123, 44, 191, 0.15) 0px, transparent 50%),
+        radial-gradient(at 85% 85%, rgba(0, 245, 212, 0.12) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      width: 100%;
+      padding: env(safe-area-inset-top, 12px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 12px) env(safe-area-inset-left, 10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    button, input, select {
+      touch-action: manipulation;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 1280px;
+    }
+
+    header h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00f5d4 0%, #7b2cbf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    header p {
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      word-break: keep-all;
+    }
+
+    /* Mobile Navigation Tabs */
+    .mobile-nav-tabs {
+      display: none;
+    }
+
+    @media (max-width: 960px) {
+      .mobile-nav-tabs {
+        display: flex;
+        width: 100%;
+        max-width: 1280px;
+        margin-bottom: 10px;
+        background: rgba(15, 23, 42, 0.7);
+        padding: 3px;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+      }
+
+      .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-sub);
+        padding: 8px 10px;
+        border-radius: 9px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .tab-btn.active {
+        background: linear-gradient(135deg, #00f5d4 0%, #00b4d8 100%);
+        color: #0b132b;
+        box-shadow: 0 3px 10px rgba(0, 245, 212, 0.3);
+      }
+
+      .sidebar-column.mobile-hidden,
+      .main-column.mobile-hidden {
+        display: none !important;
+      }
+    }
+
+    /* Main Dashboard Grid Layout (min-width: 0 prevents Grid item blowout) */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      width: 100%;
+      max-width: 1280px;
+      min-width: 0;
+    }
+
+    .main-column, .sidebar-column {
+      min-width: 0;
+      width: 100%;
+    }
+
+    @media (max-width: 960px) {
+      .app-layout {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .card-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title .badge {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 10px;
+      background: rgba(0, 245, 212, 0.15);
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    /* Trainer Main Box */
+    .trainer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #00f5d4 0%, #00b4d8 100%);
+      color: #0b132b;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 16px rgba(0, 245, 212, 0.3);
+      width: 100%;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-start:active {
+      transform: scale(0.98);
+    }
+
+    /* String Filter Selector Buttons */
+    .string-filter-container {
+      margin-bottom: 10px;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      min-width: 0;
+      width: 100%;
+    }
+
+    .string-filter-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .string-filter-label .sub-text {
+      font-size: 0.7rem;
+      font-weight: 500;
+      color: var(--accent-cyan);
+    }
+
+    .string-filter-group {
+      display: flex;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      gap: 6px;
+      padding-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .string-filter-group::-webkit-scrollbar {
+      display: none;
+    }
+
+    .string-filter-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-sub);
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-height: 34px;
+    }
+
+    .string-filter-btn.active {
+      background: linear-gradient(135deg, rgba(123, 44, 191, 0.6) 0%, rgba(0, 245, 212, 0.5) 100%);
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 245, 212, 0.35);
+    }
+
+    .target-display-card {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      position: relative;
+      margin-bottom: 10px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+
+    .string-badge {
+      display: inline-block;
+      background: rgba(123, 44, 191, 0.25);
+      color: #c77dff;
+      border: 1px solid rgba(199, 125, 255, 0.3);
+      padding: 3px 12px;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .target-note {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #ffffff;
+      text-shadow: 0 0 24px rgba(0, 245, 212, 0.4);
+      margin: 2px 0;
+    }
+
+    .target-hint-text {
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      word-break: keep-all;
+    }
+
+    .target-hint-text highlight {
+      color: var(--accent-gold);
+      font-weight: 700;
+    }
+
+    /* Live Detector Status Bar */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-card {
+      text-align: center;
+    }
+
+    .status-card .label {
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      margin-bottom: 2px;
+    }
+
+    .status-card .val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    /* Fretboard Container & Touch Scrolling */
+    .fretboard-wrapper {
+      margin-top: 4px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .fretboard-wrapper::-webkit-scrollbar {
+      height: 4px;
+    }
+    .fretboard-wrapper::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+    }
+
+    .fretboard {
+      display: flex;
+      background: var(--fretboard-bg);
+      border-radius: 10px;
+      padding: 12px 6px;
+      min-width: 680px;
+      border: 2px solid #3d2c27;
+      box-shadow: inset 0 0 16px rgba(0,0,0,0.8), 0 6px 18px rgba(0,0,0,0.5);
+      position: relative;
+      user-select: none;
+    }
+
+    /* Fret Headstock Nut & Frets */
+    .fret-column {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      flex: 1;
+      align-items: center;
+    }
+
+    .fret-column.nut {
+      flex: 0 0 42px;
+      border-right: 5px solid #e2e8f0;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .fret-column:not(.nut) {
+      border-right: 2px solid var(--fret-wire);
+    }
+
+    .fret-number {
+      position: absolute;
+      top: -18px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--text-sub);
+    }
+
+    .fret-inlay-dot {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 9px;
+      height: 9px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .fret-inlay-dot.double-top {
+      top: 25%;
+    }
+
+    .fret-inlay-dot.double-bottom {
+      top: 75%;
+    }
+
+    /* Guitar Strings & Fret Cells */
+    .string-cell {
+      width: 100%;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Horizontal String Line */
+    .string-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 100%);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Note Circle Marker */
+    .note-marker {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #1e293b;
+      border: 2px solid var(--card-border);
+      color: #94a3b8;
+      font-size: 0.68rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    }
+
+    .note-marker.target {
+      background: linear-gradient(135deg, #ffb703 0%, #fb8500 100%);
+      color: #000;
+      border-color: #ffe066;
+      box-shadow: 0 0 14px rgba(255, 183, 3, 0.8);
+      transform: scale(1.15);
+      animation: pulse-target 1.5s infinite alternate;
+    }
+
+    .note-marker.correct-flash {
+      background: linear-gradient(135deg, #00f5d4 0%, #10b981 100%) !important;
+      color: #052e16 !important;
+      box-shadow: 0 0 20px rgba(0, 245, 212, 1) !important;
+      transform: scale(1.3) !important;
+      animation: none;
+    }
+
+    .note-marker.wrong-flash {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+      color: #ffffff !important;
+      border-color: #fca5a5 !important;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 1) !important;
+      transform: scale(1.3) !important;
+      animation: none;
+    }
+
+    @keyframes pulse-target {
+      0% { transform: scale(1.1); box-shadow: 0 0 10px rgba(255, 183, 3, 0.6); }
+      100% { transform: scale(1.25); box-shadow: 0 0 18px rgba(255, 183, 3, 0.95); }
+    }
+
+    .fretboard-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      gap: 8px;
+    }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      min-height: 28px;
+    }
+
+    .toggle-label input {
+      accent-color: var(--accent-cyan);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    /* History Sidebar Panel */
+    .history-card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-bottom: 10px;
+      background: rgba(15, 23, 42, 0.5);
+      padding: 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stats-item {
+      text-align: center;
+    }
+
+    .stats-item .s-label {
+      font-size: 0.65rem;
+      color: var(--text-sub);
+    }
+
+    .stats-item .s-val {
+      font-family: 'Outfit', sans-serif;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .history-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .history-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+
+    .history-item {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .history-target {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .history-target .tag {
+      font-size: 0.68rem;
+      background: rgba(123, 44, 191, 0.3);
+      color: #d8b4fe;
+      padding: 1px 5px;
+      border-radius: 5px;
+    }
+
+    .history-meta {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+
+    .history-score {
+      text-align: right;
+    }
+
+    .history-score .pts {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 0.9rem;
+      color: var(--accent-cyan);
+    }
+
+    .history-score .time {
+      font-size: 0.68rem;
+      color: var(--text-sub);
+    }
+
+    .empty-history {
+      text-align: center;
+      padding: 24px 10px;
+      color: var(--text-sub);
+      font-size: 0.82rem;
+    }
+
+    .btn-clear-history {
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-sub);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      width: 100%;
+      min-height: 36px;
+    }
+
+    .btn-clear-history:active {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .correct-card-flash {
+      animation: cardFlashGreen 0.5s ease-out;
+    }
+
+    @keyframes cardFlashGreen {
+      0% { border-color: var(--accent-cyan); box-shadow: 0 0 30px rgba(0, 245, 212, 0.4); }
+      100% { border-color: var(--card-border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
+    }
+
+    .incorrect-card-flash {
+      animation: cardFlashRed 0.5s ease-out;
+    }
+
+    @keyframes cardFlashRed {
+      0% { border-color: var(--danger); box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); }
+      100% { border-color: var(--card-border); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }
+    }
+
+    /* iPhone & Small Screen Portrait Compact Adjustments */
+    @media (max-width: 580px) and (orientation: portrait) {
+      header h1 {
+        font-size: 1.4rem;
+      }
+      header p {
+        display: none;
+      }
+      .target-note {
+        font-size: 2.6rem;
+      }
+      .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 6px;
+      }
+      .status-card .val {
+        font-size: 0.95rem;
+      }
+      .fretboard-controls {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .card {
+        padding: 12px;
+        border-radius: 14px;
+        margin-bottom: 8px;
+      }
+      .string-filter-container {
+        padding: 6px 8px;
+        margin-bottom: 8px;
+      }
+      .string-filter-btn {
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        min-height: 30px;
+      }
+    }
+
+    /* iPhone & Mobile LANDSCAPE (가로 모드) Optimization */
+    @media (orientation: landscape) and (max-height: 520px) {
+      body {
+        padding: 4px 8px;
+      }
+      header {
+        display: none;
+      }
+      .mobile-nav-tabs {
+        margin-bottom: 6px;
+      }
+      .app-layout {
+        grid-template-columns: 280px 1fr;
+        gap: 8px;
+      }
+      .card {
+        padding: 10px;
+        margin-bottom: 0;
+      }
+      .target-display-card {
+        padding: 8px;
+        margin-bottom: 6px;
+      }
+      .target-note {
+        font-size: 2.2rem;
+      }
+      .string-badge {
+        font-size: 0.8rem;
+        padding: 2px 8px;
+      }
+      .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 4px 6px;
+      }
+      .status-card .val {
+        font-size: 0.85rem;
+      }
+      .fretboard {
+        min-width: 600px;
+        padding: 8px 4px;
+      }
+      .string-cell {
+        height: 22px;
+      }
+      .note-marker {
+        width: 18px;
+        height: 18px;
+        font-size: 0.6rem;
+      }
+      .fretboard-controls {
+        flex-direction: row;
+        gap: 12px;
+        margin-top: 6px;
+        font-size: 0.72rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎸 기타 지판 음계 트레이너</h1>
+    <p>마이크를 켜고 기타를 연주하여 제시된 음계를 맞히고 실시간 지판과 이력을 확인하세요!</p>
+  </header>
+
+  <!-- Mobile Tab Navigation Bar (Visible only on iPhone / Mobile) -->
+  <div class="mobile-nav-tabs">
+    <button class="tab-btn active" id="tabTrainerBtn">🎯 트레이너 & 지판</button>
+    <button class="tab-btn" id="tabHistoryBtn">📜 연주 이력 (<span id="mobileHistoryBadge">0</span>)</button>
+  </div>
+
+  <main class="app-layout">
+    <!-- Left Main Column: Trainer Controls & Fretboard Display -->
+    <div class="main-column" id="mainColumn">
+      
+      <!-- Trainer Status & Target Card -->
+      <div class="card" id="gameCard">
+        <div class="trainer-header">
+          <button class="btn-start" id="startBtn">🎤 마이크 시작 & 게임 시작</button>
+        </div>
+
+        <!-- String Selection Filter (Multi-Select Supported) -->
+        <div class="string-filter-container">
+          <div class="string-filter-label">
+            <span>🎯 테스트할 줄 선택</span>
+            <span class="sub-text">💡 터치하여 선택 (복수 가능)</span>
+          </div>
+          <div class="string-filter-group" id="stringFilterGroup">
+            <button class="string-filter-btn active" data-string-num="0">전체 줄</button>
+            <button class="string-filter-btn active" data-string-num="1">1번줄 (E)</button>
+            <button class="string-filter-btn active" data-string-num="2">2번줄 (B)</button>
+            <button class="string-filter-btn active" data-string-num="3">3번줄 (G)</button>
+            <button class="string-filter-btn active" data-string-num="4">4번줄 (D)</button>
+            <button class="string-filter-btn active" data-string-num="5">5번줄 (A)</button>
+            <button class="string-filter-btn active" data-string-num="6">6번줄 (E)</button>
+          </div>
+        </div>
+
+        <div class="target-display-card">
+          <div class="string-badge" id="stringDisplay">준비 중</div>
+          <div class="target-note" id="targetNoteDisplay">?</div>
+          <div class="target-hint-text" id="targetHintDisplay">시작 버튼을 눌러 피치 감지를 시작하세요.</div>
+        </div>
+
+        <!-- Real-time Pitch & Status Info -->
+        <div class="status-grid">
+          <div class="status-card">
+            <div class="label">감지된 음</div>
+            <div class="val" id="detectedNote">-</div>
+          </div>
+          <div class="status-card">
+            <div class="label">주파수(Hz)</div>
+            <div class="val" id="detectedPitch">0 Hz</div>
+          </div>
+          <div class="status-card">
+            <div class="label">현재 점수</div>
+            <div class="val" id="scoreDisplay">0</div>
+          </div>
+          <div class="status-card">
+            <div class="label">연속 성공</div>
+            <div class="val" id="streakDisplay">0🔥</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fretboard Visualizer Card -->
+      <div class="card" id="fretboardCard">
+        <div class="card-title">
+          <span>🎸 기타 지판 (Fretboard)</span>
+          <span class="badge">0~12 Frets 👈 스크롤</span>
+        </div>
+
+        <div class="fretboard-wrapper">
+          <div class="fretboard" id="fretboard">
+            <!-- Dynamically Rendered by JavaScript -->
+          </div>
+        </div>
+
+        <div class="fretboard-controls">
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleShowHint">
+            <span>목표 음 프렛 힌트 보기</span>
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="toggleShowAllNotes">
+            <span>지판 전체 음 표시</span>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Sidebar Column: Performance History -->
+    <aside class="sidebar-column" id="sidebarColumn">
+      <div class="card history-card">
+        <div class="card-title">
+          <span>📜 연주 이력 (History)</span>
+          <span class="badge" id="historyCountBadge">0건</span>
+        </div>
+
+        <!-- History Stats Summary -->
+        <div class="stats-summary">
+          <div class="stats-item">
+            <div class="s-label">성공 횟수</div>
+            <div class="s-val" id="totalSuccessVal">0</div>
+          </div>
+          <div class="stats-item">
+            <div class="s-label">평균 반응속도</div>
+            <div class="s-val" id="avgTimeVal">0.0s</div>
+          </div>
+          <div class="stats-item">
+            <div class="s-label">최고 연속</div>
+            <div class="s-val" id="maxStreakVal">0</div>
+          </div>
+        </div>
+
+        <!-- Scrollable History Log -->
+        <div class="history-list" id="historyList">
+          <div class="empty-history" id="emptyHistory">
+            연주 성공 이력이 이곳에 기록됩니다.
+          </div>
+        </div>
+
+        <button class="btn-clear-history" id="clearHistoryBtn">이력 초기화</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+    
+    // 기타 표준 튜닝 (1번줄 High E ~ 6번줄 Low E)
+    const STRINGS = [
+      { num: 1, name: "1번줄 (E)", openNote: "E", openMidi: 64, thickness: 1.5 },
+      { num: 2, name: "2번줄 (B)", openNote: "B", openMidi: 59, thickness: 2.0 },
+      { num: 3, name: "3번줄 (G)", openNote: "G", openMidi: 55, thickness: 2.5 },
+      { num: 4, name: "4번줄 (D)", openNote: "D", openMidi: 50, thickness: 3.2 },
+      { num: 5, name: "5번줄 (A)", openNote: "A", openMidi: 45, thickness: 4.0 },
+      { num: 6, name: "6번줄 (E)", openNote: "E", openMidi: 40, thickness: 4.8 }
+    ];
+
+    const INLAY_FRETS = [3, 5, 7, 9, 12];
+
+    let audioCtx = null;
+    let analyser = null;
+    let microphone = null;
+    let isPlaying = false;
+
+    // 복수 선택 지원 (기본값: 1~6번줄 전체 선택)
+    let selectedStringNums = new Set([1, 2, 3, 4, 5, 6]);
+
+    let targetString = null;
+    let targetNote = "";
+    let targetFret = -1;
+    let score = 0;
+    let currentStreak = 0;
+    let maxStreak = 0;
+    let correctHoldCount = 0;
+    let wrongHoldCount = 0;
+    let lastWrongNote = "";
+    let questionStartTime = 0;
+
+    let isCooldown = false;
+    let gracePeriodUntil = 0;
+
+    // History statistics
+    let historyData = [];
+
+    // DOM Elements
+    const startBtn = document.getElementById('startBtn');
+    const stringDisplay = document.getElementById('stringDisplay');
+    const targetNoteDisplay = document.getElementById('targetNoteDisplay');
+    const targetHintDisplay = document.getElementById('targetHintDisplay');
+    const detectedNoteDisplay = document.getElementById('detectedNote');
+    const detectedPitchDisplay = document.getElementById('detectedPitch');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const streakDisplay = document.getElementById('streakDisplay');
+    const gameCard = document.getElementById('gameCard');
+    const fretboardEl = document.getElementById('fretboard');
+
+    const toggleShowHint = document.getElementById('toggleShowHint');
+    const toggleShowAllNotes = document.getElementById('toggleShowAllNotes');
+
+    const historyListEl = document.getElementById('historyList');
+    const emptyHistoryEl = document.getElementById('emptyHistory');
+    const historyCountBadge = document.getElementById('historyCountBadge');
+    const mobileHistoryBadge = document.getElementById('mobileHistoryBadge');
+    const totalSuccessVal = document.getElementById('totalSuccessVal');
+    const avgTimeVal = document.getElementById('avgTimeVal');
+    const maxStreakVal = document.getElementById('maxStreakVal');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+
+    const mainColumn = document.getElementById('mainColumn');
+    const sidebarColumn = document.getElementById('sidebarColumn');
+    const tabTrainerBtn = document.getElementById('tabTrainerBtn');
+    const tabHistoryBtn = document.getElementById('tabHistoryBtn');
+
+    // Mobile Tab Switcher Logic
+    function switchMobileTab(tab) {
+      if (tab === 'trainer') {
+        tabTrainerBtn.classList.add('active');
+        tabHistoryBtn.classList.remove('active');
+        mainColumn.classList.remove('mobile-hidden');
+        sidebarColumn.classList.add('mobile-hidden');
+      } else {
+        tabHistoryBtn.classList.add('active');
+        tabTrainerBtn.classList.remove('active');
+        sidebarColumn.classList.remove('mobile-hidden');
+        mainColumn.classList.add('mobile-hidden');
+      }
+    }
+
+    tabTrainerBtn.addEventListener('click', () => switchMobileTab('trainer'));
+    tabHistoryBtn.addEventListener('click', () => switchMobileTab('history'));
+
+    // Initialize Mobile View Filter
+    if (window.innerWidth <= 960) {
+      switchMobileTab('trainer');
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 960) {
+        mainColumn.classList.remove('mobile-hidden');
+        sidebarColumn.classList.remove('mobile-hidden');
+      } else {
+        if (tabTrainerBtn.classList.contains('active')) {
+          switchMobileTab('trainer');
+        } else {
+          switchMobileTab('history');
+        }
+      }
+    });
+
+    // 0. 다중 선택 지원 String Filter UI 및 Event Handler
+    function updateStringFilterUI() {
+      const allBtn = document.querySelector('.string-filter-btn[data-string-num="0"]');
+      const isAllSelected = selectedStringNums.size === 6;
+
+      if (isAllSelected) {
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+      }
+
+      for (let i = 1; i <= 6; i++) {
+        const btn = document.querySelector(`.string-filter-btn[data-string-num="${i}"]`);
+        if (selectedStringNums.has(i)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      }
+    }
+
+    const stringFilterBtns = document.querySelectorAll('.string-filter-btn');
+    stringFilterBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const num = parseInt(e.target.dataset.stringNum);
+
+        if (num === 0) {
+          selectedStringNums = new Set([1, 2, 3, 4, 5, 6]);
+        } else {
+          if (selectedStringNums.size === 6) {
+            selectedStringNums = new Set([num]);
+          } else {
+            if (selectedStringNums.has(num)) {
+              if (selectedStringNums.size > 1) {
+                selectedStringNums.delete(num);
+              }
+            } else {
+              selectedStringNums.add(num);
+            }
+          }
+        }
+
+        updateStringFilterUI();
+
+        if (isPlaying && !isCooldown) {
+          nextQuestion();
+        }
+      });
+    });
+
+    // 1. 지판 UI 동적 생성 (Fret 0 ~ 12)
+    function renderFretboardUI() {
+      fretboardEl.innerHTML = '';
+
+      for (let fret = 0; fret <= 12; fret++) {
+        const fretCol = document.createElement('div');
+        fretCol.className = `fret-column ${fret === 0 ? 'nut' : ''}`;
+        fretCol.dataset.fret = fret;
+
+        // Fret Number Label
+        const fretNumLabel = document.createElement('div');
+        fretNumLabel.className = 'fret-number';
+        fretNumLabel.innerText = fret === 0 ? 'Nut' : fret;
+        fretCol.appendChild(fretNumLabel);
+
+        // Fret Inlay Markers
+        if (INLAY_FRETS.includes(fret)) {
+          if (fret === 12) {
+            const dot1 = document.createElement('div');
+            dot1.className = 'fret-inlay-dot double-top';
+            const dot2 = document.createElement('div');
+            dot2.className = 'fret-inlay-dot double-bottom';
+            fretCol.appendChild(dot1);
+            fretCol.appendChild(dot2);
+          } else {
+            const dot = document.createElement('div');
+            dot.className = 'fret-inlay-dot';
+            fretCol.appendChild(dot);
+          }
+        }
+
+        // 6 Strings for this Fret Column
+        STRINGS.forEach(str => {
+          const cell = document.createElement('div');
+          cell.className = 'string-cell';
+
+          // Horizontal String Line
+          const stringLine = document.createElement('div');
+          stringLine.className = 'string-line';
+          stringLine.style.height = `${str.thickness}px`;
+          cell.appendChild(stringLine);
+
+          // Calculate note for this specific string & fret
+          const openIdx = NOTE_NAMES.indexOf(str.openNote);
+          const noteName = NOTE_NAMES[(openIdx + fret) % 12];
+
+          // Note marker circle
+          const marker = document.createElement('div');
+          marker.className = 'note-marker';
+          marker.dataset.string = str.num;
+          marker.dataset.fret = fret;
+          marker.dataset.note = noteName;
+          marker.innerText = noteName;
+          marker.style.display = 'none';
+
+          cell.appendChild(marker);
+          fretCol.appendChild(cell);
+        });
+
+        fretboardEl.appendChild(fretCol);
+      }
+
+      updateFretboardMarkers();
+    }
+
+    // 2. 지판 마커 업데이트 (기본적으로 답을 가리지 않고, 힌트 체크박스를 켤 때만 표시)
+    function updateFretboardMarkers() {
+      const markers = fretboardEl.querySelectorAll('.note-marker');
+      const showHint = toggleShowHint.checked;
+      const showAll = toggleShowAllNotes.checked;
+
+      markers.forEach(marker => {
+        const strNum = parseInt(marker.dataset.string);
+        const fretNum = parseInt(marker.dataset.fret);
+        const noteName = marker.dataset.note;
+
+        marker.classList.remove('target', 'correct-flash', 'wrong-flash');
+        
+        let isTargetMarker = false;
+        if (targetString && targetNote) {
+          if (strNum === targetString.num && noteName === targetNote) {
+            isTargetMarker = true;
+          }
+        }
+
+        if (showAll) {
+          marker.style.display = 'flex';
+          if (isTargetMarker && showHint) {
+            marker.classList.add('target');
+          }
+        } else if (showHint && isTargetMarker) {
+          marker.style.display = 'flex';
+          marker.classList.add('target');
+        } else {
+          marker.style.display = 'none';
+        }
+      });
+    }
+
+    // 3. 정답 성공 시 지판 애니메이션
+    function flashFretboardSuccess() {
+      const markers = fretboardEl.querySelectorAll('.note-marker');
+      markers.forEach(marker => {
+        const strNum = parseInt(marker.dataset.string);
+        const noteName = marker.dataset.note;
+
+        if (targetString && strNum === targetString.num && noteName === targetNote) {
+          marker.style.display = 'flex';
+          marker.classList.add('correct-flash');
+          setTimeout(() => {
+            marker.classList.remove('correct-flash');
+            updateFretboardMarkers();
+          }, 800);
+        }
+      });
+    }
+
+    // 4. 오답 발생 시 지판 애니메이션
+    function flashFretboardWrong(strNum, wrongNoteName) {
+      const markers = fretboardEl.querySelectorAll('.note-marker');
+      markers.forEach(marker => {
+        const sNum = parseInt(marker.dataset.string);
+        const noteName = marker.dataset.note;
+
+        if (sNum === strNum && noteName === wrongNoteName) {
+          marker.style.display = 'flex';
+          marker.classList.add('wrong-flash');
+          setTimeout(() => {
+            marker.classList.remove('wrong-flash');
+            updateFretboardMarkers();
+          }, 800);
+        }
+      });
+    }
+
+    // 5. 사운드 피드백 (iOS Safari 대응 Web Audio API Unlock 포함)
+    function playSuccessSound() {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function playWrongSound() {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.linearRampToValueAtTime(110, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 6. 새로운 문제 생성 (프렛 번호를 노출하지 않고 문제 제시)
+    function nextQuestion() {
+      let stringPool = STRINGS.filter(s => selectedStringNums.has(s.num));
+      if (stringPool.length === 0) {
+        stringPool = STRINGS;
+      }
+
+      const randomString = stringPool[Math.floor(Math.random() * stringPool.length)];
+      const randomNote = NOTE_NAMES[Math.floor(Math.random() * NOTE_NAMES.length)];
+      
+      targetString = randomString;
+      targetNote = randomNote;
+
+      const openIdx = NOTE_NAMES.indexOf(targetString.openNote);
+      targetFret = (NOTE_NAMES.indexOf(targetNote) - openIdx + 12) % 12;
+
+      stringDisplay.innerText = targetString.name;
+      targetNoteDisplay.innerText = targetNote;
+      targetHintDisplay.innerHTML = `<highlight>${targetString.num}번줄</highlight>에서 <highlight>${targetNote}</highlight> 음을 찾아 연주하세요!`;
+      
+      correctHoldCount = 0;
+      wrongHoldCount = 0;
+      lastWrongNote = "";
+      questionStartTime = Date.now();
+      
+      // 새 문제 시작 후 1초간 이전 문제 잔여 진동음으로 인한 오답 판정 방지 (Grace Period)
+      gracePeriodUntil = Date.now() + 1000;
+
+      updateFretboardMarkers();
+    }
+
+    // 7. 이력(History) 및 통계 업데이트
+    function addHistoryEntry(pitch, responseTimeSec) {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+
+      const entry = {
+        id: Date.now(),
+        timeStr,
+        stringName: targetString.name,
+        targetNote,
+        fret: targetFret,
+        pitch: Math.round(pitch),
+        responseTimeSec: parseFloat(responseTimeSec),
+        scoreGained: 10
+      };
+
+      historyData.unshift(entry);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (historyData.length === 0) {
+        emptyHistoryEl.style.display = 'block';
+        historyListEl.innerHTML = '';
+        historyListEl.appendChild(emptyHistoryEl);
+        historyCountBadge.innerText = '0건';
+        mobileHistoryBadge.innerText = '0';
+        totalSuccessVal.innerText = '0';
+        avgTimeVal.innerText = '0.0s';
+        maxStreakVal.innerText = `${maxStreak}`;
+        return;
+      }
+
+      emptyHistoryEl.style.display = 'none';
+      historyListEl.innerHTML = '';
+
+      let totalTime = 0;
+      historyData.forEach(item => {
+        totalTime += item.responseTimeSec;
+
+        const el = document.createElement('div');
+        el.className = 'history-item';
+        el.innerHTML = `
+          <div class="history-info">
+            <div class="history-target">
+              <span>${item.targetNote}</span>
+              <span class="tag">${item.stringName} (${item.fret}프렛)</span>
+            </div>
+            <div class="history-meta">${item.timeStr} • ${item.pitch} Hz</div>
+          </div>
+          <div class="history-score">
+            <div class="pts">+${item.scoreGained}</div>
+            <div class="time">⏱️ ${item.responseTimeSec}s</div>
+          </div>
+        `;
+        historyListEl.appendChild(el);
+      });
+
+      // Stats Update
+      historyCountBadge.innerText = `${historyData.length}건`;
+      mobileHistoryBadge.innerText = `${historyData.length}`;
+      totalSuccessVal.innerText = `${historyData.length}`;
+      const avgTime = (totalTime / historyData.length).toFixed(1);
+      avgTimeVal.innerText = `${avgTime}s`;
+      maxStreakVal.innerText = `${maxStreak}`;
+    }
+
+    clearHistoryBtn.addEventListener('click', () => {
+      historyData = [];
+      renderHistory();
+    });
+
+    toggleShowHint.addEventListener('change', updateFretboardMarkers);
+    toggleShowAllNotes.addEventListener('change', updateFretboardMarkers);
+
+    // 8. 오디오 및 마이크 세팅
+    async function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
+        });
+        microphone = audioCtx.createMediaStreamSource(stream);
+        microphone.connect(analyser);
+        isPlaying = true;
+        startBtn.style.display = 'none';
+        nextQuestion();
+        updatePitch();
+      } catch (err) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          microphone = audioCtx.createMediaStreamSource(stream);
+          microphone.connect(analyser);
+          isPlaying = true;
+          startBtn.style.display = 'none';
+          nextQuestion();
+          updatePitch();
+        } catch (fallbackErr) {
+          alert('마이크 접근 권한이 필요합니다. (iOS 설정 > Safari > 마이크 허용 여부를 확인해 주세요): ' + fallbackErr.message);
+        }
+      }
+    }
+
+    // 9. Autocorrelation Pitch Detection
+    function autoCorrelate(buf, sampleRate) {
+      let SIZE = buf.length;
+      let rms = 0;
+
+      for (let i = 0; i < SIZE; i++) {
+        let val = buf[i];
+        rms += val * val;
+      }
+      rms = Math.sqrt(rms / SIZE);
+
+      if (rms < 0.015) return -1;
+
+      let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+      for (let i = 0; i < SIZE / 2; i++) {
+        if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+      }
+      for (let i = 1; i < SIZE / 2; i++) {
+        if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+      }
+
+      buf = buf.slice(r1, r2);
+      SIZE = buf.length;
+
+      let c = new Array(SIZE).fill(0);
+      for (let i = 0; i < SIZE; i++) {
+        for (let j = 0; j < SIZE - i; j++) {
+          c[i] = c[i] + buf[j] * buf[j + i];
+        }
+      }
+
+      let d = 0;
+      while (c[d] > c[d + 1]) d++;
+      let maxval = -1, maxpos = -1;
+      for (let i = d; i < SIZE; i++) {
+        if (c[i] > maxval) {
+          maxval = c[i];
+          maxpos = i;
+        }
+      }
+      let T0 = maxpos;
+
+      let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+      let a = (x1 + x3 - 2 * x2) / 2;
+      let b = (x3 - x1) / 2;
+      if (a) T0 = T0 - b / (2 * a);
+
+      return sampleRate / T0;
+    }
+
+    function frequencyToNote(freq) {
+      let noteNum = 12 * (Math.log(freq / 440) / Math.log(2));
+      let midiNote = Math.round(noteNum) + 69;
+      let noteName = NOTE_NAMES[midiNote % 12];
+      return noteName;
+    }
+
+    // 10. Real-time Audio Loop
+    function updatePitch() {
+      let buf = new Float32Array(2048);
+      analyser.getFloatTimeDomainData(buf);
+      
+      let pitch = autoCorrelate(buf, audioCtx.sampleRate);
+
+      if (pitch !== -1 && pitch >= 70 && pitch <= 1000) {
+        let detected = frequencyToNote(pitch);
+        
+        detectedPitchDisplay.innerText = `${Math.round(pitch)} Hz`;
+        detectedNoteDisplay.innerText = detected;
+
+        if (!isCooldown) {
+          if (detected === targetNote) {
+            wrongHoldCount = 0;
+            correctHoldCount++;
+            if (correctHoldCount > 3) {
+              isCooldown = true;
+              const responseTimeSec = ((Date.now() - questionStartTime) / 1000).toFixed(1);
+              
+              score += 10;
+              currentStreak += 1;
+              if (currentStreak > maxStreak) maxStreak = currentStreak;
+
+              scoreDisplay.innerText = score;
+              streakDisplay.innerText = `${currentStreak}🔥`;
+
+              gameCard.classList.add('correct-card-flash');
+              setTimeout(() => gameCard.classList.remove('correct-card-flash'), 500);
+
+              flashFretboardSuccess();
+              playSuccessSound();
+              addHistoryEntry(pitch, responseTimeSec);
+
+              targetHintDisplay.innerHTML = `<span style="color: var(--accent-cyan); font-weight: bold; font-size: 0.95rem;">🎉 정답입니다! (+10점)</span> <span style="color: var(--text-sub); font-size: 0.8rem;">(다음 문제 준비 중...)</span>`;
+
+              setTimeout(() => {
+                isCooldown = false;
+                nextQuestion();
+              }, 1500);
+            }
+          } else {
+            correctHoldCount = 0;
+            
+            if (Date.now() > gracePeriodUntil) {
+              if (detected === lastWrongNote) {
+                wrongHoldCount++;
+              } else {
+                lastWrongNote = detected;
+                wrongHoldCount = 1;
+              }
+
+              if (wrongHoldCount === 8) {
+                currentStreak = 0;
+                streakDisplay.innerText = `0🔥`;
+
+                gameCard.classList.add('incorrect-card-flash');
+                setTimeout(() => gameCard.classList.remove('incorrect-card-flash'), 500);
+
+                flashFretboardWrong(targetString.num, detected);
+                playWrongSound();
+
+                targetHintDisplay.innerHTML = `<span style="color: var(--danger); font-weight: bold;">❌ 오답! (감지: ${detected})</span> - <highlight>${targetString.num}번줄</highlight>에서 <highlight>${targetNote}</highlight> 음을 다시 찾아보세요.`;
+              }
+            }
+          }
+        }
+      } else {
+        detectedPitchDisplay.innerText = '입력 대기 중...';
+        detectedNoteDisplay.innerText = '-';
+        correctHoldCount = 0;
+        wrongHoldCount = 0;
+      }
+
+      if (isPlaying) {
+        requestAnimationFrame(updatePitch);
+      }
+    }
+
+    // Initialize Fretboard & Filter UI on load
+    renderFretboardUI();
+    updateStringFilterUI();
+
+    startBtn.addEventListener('click', initAudio);
+  </script>
+</body>
+</html>
